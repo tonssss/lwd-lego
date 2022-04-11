@@ -1,14 +1,18 @@
 <template>
-  <hello msg="hello worlds" />
+  <div class="app-container">
+    <router-view/>
+  </div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import Hello from './components/Hello'
 export default defineComponent({
   name: 'App',
-  components:{
-    Hello
-  }
 })
 </script>
+
+<style>
+.page-title {
+  color: #fff;
+}
+</style>
