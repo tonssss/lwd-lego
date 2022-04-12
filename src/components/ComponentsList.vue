@@ -23,6 +23,7 @@ export default defineComponent({
   },
   setup(props, context) {
     const onItemClick = (data: any) => {
+      console.log(data)
       context.emit('on-item-click', data)
     }
     return {

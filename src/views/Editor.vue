@@ -69,7 +69,6 @@ export default defineComponent({
       store.commit('setActive', id)
     }
     const handleChange = (e: any) => {
-      console.log('event', e)
       store.commit('updateComponent', e)
     } 
     return {
