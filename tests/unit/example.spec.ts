@@ -29,6 +29,7 @@ describe('HelloWorld.vue', () => {
     await wrapper.get('.addTodo').trigger('click')
     expect(wrapper.findAll('li')).toHaveLength(1)
     expect(wrapper.get('li').text()).toBe(todoContent)
+    console.log(wrapper.emitted())
     expect(wrapper.emitted()).toHaveProperty('send')
     const events = wrapper.emitted('send')
     expect(events[0]).toEqual([todoContent])

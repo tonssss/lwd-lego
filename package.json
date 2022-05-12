@@ -10,12 +10,17 @@
   },
   "dependencies": {
     "ant-design-vue": "^2.0.0-rc.5",
+    "array-move": "^3.0.1",
     "axios": "^0.21.1",
     "core-js": "^3.6.5",
+    "cropperjs": "^1.5.11",
+    "hotkeys-js": "^3.8.3",
+    "lego-bricks": "^1.0.11",
     "lodash-es": "^4.17.20",
     "uuid": "^8.3.2",
     "vue": "^3.0.0",
     "vue-router": "^4.0.1",
+    "vuedraggable": "^4.0.1",
     "vuex": "^4.0.0-rc.2"
   },
   "devDependencies": {

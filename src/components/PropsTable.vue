@@ -3,10 +3,12 @@
     <div
       v-for="(value, key) in finalProps"
       :key="key"
+      :class="{'no-text': !value.text}"
       class="prop-item"
+      :id="`item-${key}`"
     >
       <span class="label" v-if="value.text">{{value.text}}</span>
-      <div class="prop-component">
+      <div :class="`prop-component component-${value.component}`">
         <component
           :is="value.component" 
           :[value.valueProp]="value.value" 
@@ -32,9 +34,14 @@
 import { computed, defineComponent, PropType, VNode } from 'vue'
 import { reduce } from 'lodash'
 import { mapPropsToForms } from '../propsMap'
-import { TextComponentProps } from '../defaultProps'
+import { AllComponentProps } from 'lego-bricks'
 import RenderVnode from './RenderVnode'
 import ColorPicker from './ColorPicker.vue'
+import ImageProcesser from './ImageProcesser.vue'
+import ShadowPicker from './ShadowPicker.vue'
+import IconSwitch from './IconSwitch.vue'
+import BackgroundProcesser from './BackgroundProcesser.vue'
+
 interface FormProps {
   component: string;
   subComponent?: string;
@@ -50,19 +57,23 @@ export default defineComponent({
   name: 'props-table',
   props: {
     props: {
-      type: Object as PropType<TextComponentProps>,
+      type: Object as PropType<AllComponentProps>,
       required: true
     }
   },
   components: {
     RenderVnode,
-    ColorPicker
+    ColorPicker,
+    ImageProcesser,
+    ShadowPicker,
+    IconSwitch,
+    BackgroundProcesser
   },
   emits: ['change'],
   setup(props, context) {
     const finalProps = computed(() => {
       return reduce(props.props, (result, value, key) => {
-        const newKey = key as keyof TextComponentProps
+        const newKey = key as keyof AllComponentProps
         const item = mapPropsToForms[newKey]
         if (item) {
           const { valueProp = 'value', eventName = 'change', initalTransform, afterTransform } = item
@@ -99,5 +110,17 @@ export default defineComponent({
 .prop-component {
   width: 70%;
 }
-
+.prop-item.no-text {
+  display: inline-block;
+  margin: 0 10px 0 0;
+}
+#item-fontWeight {
+  margin-left: 28%;
+}
+.component-a-select .ant-select {
+  width: 150px;
+}
+.prop-component.component-shadow-picker, .prop-component.component-image-processer, .prop-component.component-background-processer {
+  width: 100%;
+}
 </style>

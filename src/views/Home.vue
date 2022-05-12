@@ -6,6 +6,7 @@
 
 <script lang="ts">
 import { computed, defineComponent } from 'vue'
+import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { GlobalDataProps } from '../store/index'
 import TemplateList from '../components/TemplateList.vue'

@@ -10,9 +10,3 @@ export default defineComponent({
   name: 'App'
 })
 </script>
-
-<style>
-.page-title {
-  color: #fff;
-}
-</style>
