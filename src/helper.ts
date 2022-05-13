@@ -66,3 +66,7 @@ export const insertAt = (arr: any[], index: number, newItem: any) => {
     ...arr.slice(index)
   ]
 }
+
+export function isMobile (mobile: string) {
+  return /^1[3-9]\d{9}$/.test(mobile)
+}

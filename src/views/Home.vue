@@ -1,12 +1,12 @@
 <template>
 <div class="content-container">
+  <h1 v-if="isLoading">templates is Loading!</h1>
   <template-list :list="testData"></template-list>
 </div>
 </template>
 
 <script lang="ts">
-import { computed, defineComponent } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, defineComponent, onMounted } from 'vue'
 import { useStore } from 'vuex'
 import { GlobalDataProps } from '../store/index'
 import TemplateList from '../components/TemplateList.vue'
@@ -17,8 +17,13 @@ export default defineComponent({
   setup() {
     const store = useStore<GlobalDataProps>()
     const testData = computed(() => store.state.templates.data)
+    const isLoading = computed(() => store.getters.isOpLoading('fetchTemplates'))
+    onMounted(() => {
+      store.dispatch('fetchTemplates')
+    })
     return {
-      testData
+      testData,
+      isLoading
     }
   }
 })

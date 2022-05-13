@@ -1,10 +1,11 @@
-import { Module } from 'vuex'
+import { Module, Mutation } from 'vuex'
 import { message } from 'ant-design-vue'
 import { v4 as uuidv4 } from 'uuid'
 import { cloneDeep } from 'lodash-es'
-import store, { GlobalDataProps } from './index'
+import store, { GlobalDataProps, actionWrapper } from './index'
 import { insertAt } from '../helper'
 import { AllComponentProps, textDefaultProps, imageDefaultProps } from 'lego-bricks'
+import { RespWorkData } from './respTypes'
 export type MoveDirection = 'Up' | 'Down' | 'Left' | 'Right'
 
 export interface HistoryProps {
@@ -37,7 +38,8 @@ export interface EditorProps {
   cachedOldValues: any;
   // 保存最多历史条目记录数
   maxHistoryNumber: number;
-
+  // 数据是否有修改
+  isDirty: boolean;
 }
 export interface PageProps {
   backgroundColor: string;
@@ -48,8 +50,11 @@ export interface PageProps {
 }
 export type AllFormProps = PageProps & AllComponentProps
 export interface PageData {
-  props: PageProps;
-  title: string;
+  id?: string;
+  props?: PageProps;
+  title?: string;
+  desc?: string;
+  coverImg?: string;
 }
 export interface ComponentData {
   // 这个元素的 属性，属性请详见下面
@@ -129,6 +134,12 @@ const modifyHistory = (state: EditorProps, history: HistoryProps, type: 'undo' |
     }
   }
 }
+const setDirtyWrapper = (callback: Mutation<EditorProps>) => {
+  return (state: EditorProps, payload: any) => {
+    state.isDirty = true
+    callback(state, payload)
+  }
+}
 const editor: Module<EditorProps, GlobalDataProps> = {
   state: {
     components: testComponents,
@@ -140,7 +151,8 @@ const editor: Module<EditorProps, GlobalDataProps> = {
     histories: [],
     historyIndex: -1,
     cachedOldValues: null,
-    maxHistoryNumber: 5
+    maxHistoryNumber: 5,
+    isDirty: false
   },
   mutations: {
     resetEditor(state) {
@@ -149,7 +161,7 @@ const editor: Module<EditorProps, GlobalDataProps> = {
       state.historyIndex = -1
       state.histories = []
     },
-    addComponent(state, component: ComponentData) {
+    addComponent: setDirtyWrapper((state, component: ComponentData) => {
       component.layerName = '图层' + (state.components.length + 1)
       state.components.push(component)
       pushHistory(state, {
@@ -158,7 +170,7 @@ const editor: Module<EditorProps, GlobalDataProps> = {
         type: 'add',
         data: cloneDeep(component)
       })
-    },
+    }),
     setActive(state, currentId: string) {
       state.currentElement = currentId
     },
@@ -223,7 +235,7 @@ const editor: Module<EditorProps, GlobalDataProps> = {
         message.success('已拷贝当前图层', 1)
       }
     },
-    pasteCopiedComponent(state) {
+    pasteCopiedComponent: setDirtyWrapper((state) => {
       if (state.copiedComponent) {
         const clone = cloneDeep(state.copiedComponent)
         clone.id = uuidv4()
@@ -237,8 +249,8 @@ const editor: Module<EditorProps, GlobalDataProps> = {
           data: cloneDeep(clone)
         })
       }
-    },
-    deleteComponent(state, id) {
+    }),
+    deleteComponent: setDirtyWrapper((state, id) => {
       const currentComponent = state.components.find((component) => component.id === id)
       if (currentComponent) {
         const currentIndex = state.components.findIndex((component) => component.id === id)
@@ -252,7 +264,7 @@ const editor: Module<EditorProps, GlobalDataProps> = {
         })
         message.success('删除当前图层成功', 1)
       }
-    },
+    }),
     moveComponent(state, data: { direction: MoveDirection; amount: number; id: string }) {
       const currentComponent = state.components.find((component) => component.id === data.id)
       if (currentComponent) {
@@ -286,7 +298,7 @@ const editor: Module<EditorProps, GlobalDataProps> = {
         }
       }
     },
-    updateComponent(state, { key, value, id, isRoot }: UpdateComponentData) {
+    updateComponent: setDirtyWrapper((state, { key, value, id, isRoot }: UpdateComponentData) => {
       const updatedComponent = state.components.find((component) => component.id === (id || state.currentElement))
       if (updatedComponent) {
         if (isRoot) {
@@ -308,10 +320,31 @@ const editor: Module<EditorProps, GlobalDataProps> = {
         }
         
       }
+    }),
+    updatePage: setDirtyWrapper((state, { key, value, isRoot }) => {
+      if (isRoot) {
+        state.page[key as keyof PageData] = value
+      } else {
+        if (state.page.props) {
+          state.page.props[key as keyof PageProps] = value
+        }
+      }
+    }),
+    fetchWork(state, { data }: RespWorkData) {
+      const { content, ...rest } = data
+      state.page = { ...state.page, ...rest }
+      if (content.props) {
+        state.page.props = content.props
+      }
+      state.components = content.components
     },
-    updatePage(state, { key, value }) {
-      state.page.props[key as keyof PageProps] = value
+    saveWork(state) {
+      state.isDirty = false
     }
+  },
+  actions: {
+    fetchWork: actionWrapper('/works/:id', 'fetchWork'),
+    saveWork: actionWrapper('/works/:id', 'saveWork', { method: 'patch' })
   },
   getters: {
     getCurrentElement: (state) => {
