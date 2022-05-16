@@ -1,38 +1,43 @@
-import axios from 'axios'
 import { Module } from 'vuex'
 import { GlobalDataProps, actionWrapper } from './index'
-import { RespListData } from './respTypes'
-export interface TemplateProps {
-  id: number;
-  title: string;
-  coverImg: string;
-  author: string;
-  copiedCount: number;
-}
-export const testData: TemplateProps[] = [
-  {id: 1, coverImg: 'https://static.imooc-lego.com/upload-files/screenshot-889755.png', title: 'test title 1', author: 'viking', copiedCount: 1 },
-  {id: 2, coverImg: 'https://static.imooc-lego.com/upload-files/screenshot-677311.png', title: '前端架构师直播海报', author: 'viking', copiedCount: 1 },
-  {id: 3, coverImg: 'https://static.imooc-lego.com/upload-files/screenshot-682056.png', title: '前端架构师直播海报', author: 'viking', copiedCount: 1},
-  {id: 4, coverImg: 'https://static.imooc-lego.com/upload-files/screenshot-677311.png', title: '前端架构师直播海报', author: 'viking', copiedCount: 1},
-  {id: 5, coverImg: 'https://static.imooc-lego.com/upload-files/screenshot-889755.png', title: '前端架构师直播海报', author: 'viking', copiedCount: 1},
-  {id: 6, coverImg: 'https://static.imooc-lego.com/upload-files/screenshot-677311.png', title: '前端架构师直播海报', author: 'viking', copiedCount: 1}
-]
+import { RespListData, RespData } from './respTypes'
+import { PageData } from './editor'
+
+export type TemplateProps = Required<Omit<PageData, 'props' | 'setting'>>
 
 export interface TemplatesProps {
   data: TemplateProps[];
+  totalTemplates: number;
+  works: TemplateProps[];
+  totalWorks: number;
 }
 
 const templates: Module<TemplatesProps, GlobalDataProps> = {
   state: {
-    data: []
+    data: [],
+    totalTemplates: 0,
+    works: [],
+    totalWorks: 0
   },
   mutations: {
     fetchTemplates(state, rawData: RespListData<TemplateProps>) {
-      state.data = rawData.data.list
+      const { count, list } = rawData.data
+      state.data = [ ...state.data, ...list ]
+      state.totalTemplates = count
+    },
+    fetchWorks(state, rawData: RespListData<TemplateProps>) {
+      const { count, list } = rawData.data
+      state.works = list
+      state.totalWorks = count
+    },
+    fetchTemplate(state, rawData: RespData<TemplateProps>) {
+      state.data = [rawData.data]
     }
   },
   actions: {
-    fetchTemplates: actionWrapper('/templates', 'fetchTemplates')
+    fetchTemplates: actionWrapper('/templates', 'fetchTemplates'),
+    fetchWorks: actionWrapper('/works', 'fetchWorks'),
+    fetchTemplate: actionWrapper('/templates/:id', 'fetchTemplate')
   },
   getters: {
     getTemplateById: (state, getters, rootState) => (id: number) => {

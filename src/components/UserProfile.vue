@@ -13,7 +13,8 @@
       <template v-slot:overlay>
         <a-menu class="user-profile-dropdown">
           <a-menu-item key="0" @click="createDesign">创建作品</a-menu-item>
-          <a-menu-item key="1" @click="logout">登出</a-menu-item>
+          <a-menu-item key="1"><router-link to="/works" >我的作品</router-link></a-menu-item>
+          <a-menu-item key="2" @click="logout">登出</a-menu-item>
         </a-menu>
       </template>
     </a-dropdown-button>

@@ -15,6 +15,7 @@ import StyledUploader from '../components/StyledUploader.vue'
 import { ComponentData } from '../store/editor'
 import { imageDefaultProps, TextComponentProps } from 'lego-bricks'
 import { UploadResp } from '../extraType'
+import { RespUploadData } from '../store/respTypes'
 import { getImageDimensions } from '../helper'
 export default defineComponent({
   props: {
@@ -37,7 +38,7 @@ export default defineComponent({
       }
       context.emit('on-item-click', componentData)
     }
-    const onImageUploaded = (data: { resp: UploadResp; file: File }) => {
+    const onImageUploaded = (data: { resp: RespUploadData; file: File }) => {
       const { resp, file } = data
       const componentData: ComponentData = {
         name: 'l-image',
@@ -47,7 +48,7 @@ export default defineComponent({
         }
       }
       message.success('上传成功')
-      componentData.props.src = resp.data.url
+      componentData.props.src = resp.data.urls[0]
       getImageDimensions(file).then(({ width }) => {
         const maxWidth = 373
         componentData.props.width = ((width > maxWidth) ? maxWidth : width) + 'px'

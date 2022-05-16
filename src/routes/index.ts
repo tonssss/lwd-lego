@@ -6,6 +6,7 @@ import Editor from '../views/Editor.vue'
 import TemplateDetail from '../views/TemplateDetail.vue'
 import Index from '../views/Index.vue'
 import Login from '../views/Login.vue'
+import Works from '../views/Works.vue'
 import store from '../store'
 const router = createRouter({
   history: createWebHistory(),
@@ -16,7 +17,8 @@ const router = createRouter({
       component: Index,
       children: [
         { path: '', name: 'home', component: Home, meta: { title: '欢迎来到慕课乐高' } },
-        { path: 'template/:id', name: 'template', component: TemplateDetail, meta: { title: '模版详情' } }
+        { path: 'template/:id', name: 'template', component: TemplateDetail, meta: { title: '模版详情' } },
+        { path: 'works', name: 'works', component: Works, meta: { title: '我的作品', requiredLogin: true, } }
       ]
     },
     {

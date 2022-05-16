@@ -1,5 +1,14 @@
 <template>
 <div class="editor-container">
+  <a-modal
+    title="发布成功"
+    v-model:visible="showPublishForm"
+    width="700px"
+    :footer="null"
+  >
+    <publish-form/>
+  </a-modal>
+  <preview-form v-model:visible="showPreviewForm" v-if="showPreviewForm"></preview-form>
   <a-layout>
     <a-layout-header class="header">
       <div class="page-title">
@@ -15,13 +24,13 @@
         :style="{ lineHeight: '64px' }"
       >
         <a-menu-item key="1">
-          <a-button type="primary">预览和设置</a-button>
+          <a-button type="primary" @click="preview">预览和设置</a-button>
         </a-menu-item>
         <a-menu-item key="2">
           <a-button type="primary" @click="saveWork" :loading="saveIsLoading">保存</a-button>
         </a-menu-item>
         <a-menu-item key="3">
-          <a-button type="primary">发布</a-button>
+          <a-button type="primary" @click="publish" :loading="isPublishing">发布</a-button>
         </a-menu-item>
         <a-menu-item key="4">
           <user-profile :user="userInfo"></user-profile>
@@ -35,13 +44,14 @@
       <div class="sidebar-container">
         组件列表
         <components-list :list="defaultTextTemplates" @onItemClick="addItem"/>
+        <img id="test-image" :style="{ width: '300px' }"/>
       </div>
     </a-layout-sider>
     <a-layout style="padding: 0 24px 24px">
       <a-layout-content class="preview-container">
         <p>画布区域</p>
         <history-area></history-area>
-        <div class="preview-list" id="canvas-area">
+        <div class="preview-list" id="canvas-area" :class="{'canvas-fix': canvasFix}">
           <div class="body-container" :style="page.props">
           <edit-wrapper 
             @setActive="setActive"
@@ -102,11 +112,10 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, computed, ref, onMounted, onUnmounted } from 'vue'
+import { defineComponent, computed, ref, onMounted, nextTick } from 'vue'
 import { useStore } from 'vuex'
-import { useRoute, onBeforeRouteLeave } from 'vue-router'
-import { pickBy, forEach } from 'lodash-es'
-import { Modal } from 'ant-design-vue'
+import { useRoute } from 'vue-router'
+import { pickBy } from 'lodash-es'
 import initHotKeys from '../plugins/hotKeys'
 import initContextMenu from '../plugins/contextMenu'
 import { GlobalDataProps } from '../store/index'
@@ -118,9 +127,13 @@ import EditGroup from '../components/EditGroup.vue'
 import InlineEdit from '../components/InlineEdit.vue'
 import UserProfile from '../components/UserProfile.vue'
 import HistoryArea from './editor/HistoryArea.vue'
+import PublishForm from './editor/PublishForm.vue'
+import PreviewForm from './editor/PreviewForm.vue'
 import { ComponentData } from '../store/editor'
 import defaultTextTemplates  from '../defaultTemplates'
 import useSaveWork from '../hooks/useSaveWork'
+import usePublishWork from '../hooks/usePublishWork'
+
 export type TabType = 'component' | 'layer' | 'page'
 export default defineComponent({
   components: {
@@ -131,7 +144,9 @@ export default defineComponent({
     EditGroup,
     HistoryArea,
     InlineEdit,
-    UserProfile
+    UserProfile,
+    PublishForm,
+    PreviewForm
   },
   setup() {
     initHotKeys()
@@ -143,12 +158,21 @@ export default defineComponent({
     const components = computed(() => store.state.editor.components)
     const page = computed(() => store.state.editor.page)
     const userInfo = computed(() => store.state.user)
+    const canvasFix = ref(false)
+    const showPublishForm = ref(false)
+    const showPreviewForm = ref(false)
     const currentElement = computed<ComponentData | null>(() => store.getters.getCurrentElement)
     const { saveWork, saveIsLoading } = useSaveWork()
+    const { publishWork, isPublishing } = usePublishWork()
     onMounted(() => {
       if (currentWorkId) {
         store.dispatch('fetchWork', { urlParams: { id: currentWorkId }})
       }
+      // navigator.clipboard.writeText('hello').then(() => {
+      //   alert('nice')
+      // }, (e) => {
+      //   console.error(e)
+      // })
     })
     const addItem = (component: any) => {
       store.commit('addComponent', component)
@@ -174,7 +198,25 @@ export default defineComponent({
       const valuesArr = Object.values(updatedData).map(v => v + 'px')
       store.commit('updateComponent', { key: keysArr, value: valuesArr, id })
     }
-
+    const publish = async () => {
+      // remove select element
+      store.commit('setActive', '')
+      const el = document.getElementById('canvas-area') as HTMLElement
+      canvasFix.value = true
+      await nextTick()
+      try {
+        await publishWork(el)
+        showPublishForm.value = true
+      } catch(e) {
+        console.error(e)
+      } finally {
+        canvasFix.value = false
+      }
+    }
+    const preview = async () => {
+      await saveWork()
+      showPreviewForm.value = true
+    }
     return {
       activePanel,
       components,
@@ -189,7 +231,13 @@ export default defineComponent({
       titleChange,
       userInfo,
       saveWork,
-      saveIsLoading
+      saveIsLoading,
+      publish,
+      canvasFix,
+      isPublishing,
+      showPublishForm,
+      preview,
+      showPreviewForm
     }
   }
 })
@@ -225,5 +273,12 @@ export default defineComponent({
   font-weight: 500;
   margin-left: 10px;
   font-size: 16px;
+}
+.preview-list.canvas-fix .edit-wrapper > * {
+  box-shadow: none !important;
+}
+.preview-list.canvas-fix {
+  position: absolute;
+  max-height: none;
 }
 </style>

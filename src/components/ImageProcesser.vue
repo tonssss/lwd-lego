@@ -30,10 +30,10 @@
 import { defineComponent,  computed, ref, watch, nextTick } from 'vue'
 import { message } from 'ant-design-vue'
 import Cropper from 'cropperjs'
-import axios from 'axios'
 import { DeleteOutlined, ScissorOutlined } from '@ant-design/icons-vue'
 import StyledUploader from './StyledUploader.vue'
 import { UploadResp } from '../extraType'
+import { RespUploadData } from '../store/respTypes'
 interface CropDataProps {
   x: number;
   y: number;
@@ -116,10 +116,10 @@ export default defineComponent({
       }
       showModal.value = false
     }
-    const handleFileUploaded = (data: { resp: UploadResp; file: File }) => {
+    const handleFileUploaded = (data: { resp: RespUploadData; file: File }) => {
       const { resp } = data
       message.success('上传成功')
-      context.emit('change', resp.data.url)
+      context.emit('change', resp.data.urls[0])
       context.emit('uploaded', data)
     }
     const handleDelete = () => {

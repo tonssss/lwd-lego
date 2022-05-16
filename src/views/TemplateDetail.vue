@@ -2,18 +2,18 @@
 <div class="work-detail-container">
   <a-row type="flex" justify="center" v-if="template">
     <a-col :span="8" class="cover-img">
-      <img :src="template.coverImg" alt="">
+      <a :href="template.coverImg"><img :src="template.coverImg" alt="" id="cover-img"></a>
     </a-col>
     <a-col :span="8">
       <h2>{{template.title}}</h2>
-      <p>{{template.title}}</p>
+      <p>{{template.desc}}</p>
     <div class="author">
       <a-avatar>V</a-avatar>
       该模版由 <b>{{template.author}}</b> 创作
     </div>
     <div class="bar-code-area" >
       <span>扫一扫，手机预览</span>
-      <div ref="container"></div>
+      <canvas id="barcode-container"></canvas>
     </div>
     <div class="use-button">
       <router-link to="/editor">
@@ -25,6 +25,7 @@
       </router-link>
       <a-button
         size="large"
+        @click="download"
       >
         下载图片海报
       </a-button>
@@ -35,20 +36,33 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, computed } from 'vue'
+import { defineComponent, computed, onMounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { useStore } from 'vuex'
 import { GlobalDataProps } from '../store/index'
 import { TemplateProps } from '../store/templates'
+import { baseH5URL } from '../main'
+import { generateQRCode, downloadImage } from '../helper'
 export default defineComponent({
   setup () {
     const route = useRoute()
     const store = useStore<GlobalDataProps>()
     const currentId = route.params.id as string
     const template = computed<TemplateProps>(() => store.getters.getTemplateById(parseInt(currentId)))
+    const channelURL = computed(() => `${baseH5URL}/p/${template.value.id}-${template.value.uuid}`)
+    onMounted(async () => {
+      await store.dispatch('fetchTemplate', { urlParams: { id: currentId }})
+      await nextTick()
+      await generateQRCode('barcode-container', channelURL.value, 150)
+    })
+    const download = () => {
+      downloadImage(template.value.coverImg)
+    }
+
     return {
       route,
-      template
+      template,
+      download
     }
   }
 })
@@ -72,5 +86,8 @@ export default defineComponent({
 }
 .bar-code-area {
   margin: 20px 0;
+}
+#barcode-container {
+  display: block;
 }
 </style>

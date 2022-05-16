@@ -15,6 +15,7 @@ export type ICustomAxiosConfig = AxiosRequestConfig & {
 
 const app = createApp(App)
 const baseBackendURL = 'http://182.92.168.192:8081'
+export const baseH5URL = 'http://182.92.168.192:8082'
 axios.defaults.baseURL = `${baseBackendURL}/api/`
 axios.interceptors.request.use(config => {
   const newConfig = config as ICustomAxiosConfig
@@ -27,7 +28,7 @@ axios.interceptors.response.use((resp: AxiosResponse<RespData>) => {
   const newConfig = config as ICustomAxiosConfig
   store.commit('finishLoading', { opName: newConfig.opName })
   const { errno, message } = data
-  if (errno !== 0) {
+  if (errno && errno !== 0) {
     store.commit('setError', { status: true, message })
     return Promise.reject(data)
   }

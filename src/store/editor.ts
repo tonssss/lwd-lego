@@ -5,7 +5,7 @@ import { cloneDeep } from 'lodash-es'
 import store, { GlobalDataProps, actionWrapper } from './index'
 import { insertAt } from '../helper'
 import { AllComponentProps, textDefaultProps, imageDefaultProps } from 'lego-bricks'
-import { RespWorkData } from './respTypes'
+import { RespWorkData, ListData, RespData, RespListData } from './respTypes'
 export type MoveDirection = 'Up' | 'Down' | 'Left' | 'Right'
 
 export interface HistoryProps {
@@ -20,6 +20,12 @@ export interface UpdateComponentData {
   value: string | string[];
   id: string;
   isRoot?: boolean;
+}
+export interface ChannelProps {
+  id: number;
+  name: string;
+  workId: number;
+  status: number;
 }
 export interface EditorProps {
   // 供中间编辑器渲染的数组
@@ -40,6 +46,8 @@ export interface EditorProps {
   maxHistoryNumber: number;
   // 数据是否有修改
   isDirty: boolean;
+  // 当前 work 的 channels
+  channels: ChannelProps[];
 }
 export interface PageProps {
   backgroundColor: string;
@@ -50,11 +58,25 @@ export interface PageProps {
 }
 export type AllFormProps = PageProps & AllComponentProps
 export interface PageData {
-  id?: string;
+  id?: number;
   props?: PageProps;
   title?: string;
   desc?: string;
   coverImg?: string;
+  uuid?: string;
+  setting?: { [key: string]: any };
+  isTemplate?: boolean;
+  isHot?: boolean;
+  isNew?: boolean;
+  author?: string;
+  copiedCount?: number;
+  status?: number;
+  user? : {
+    gender: string;
+    nickName: string;
+    picture: string;
+    userName: string;
+  };
 }
 export interface ComponentData {
   // 这个元素的 属性，属性请详见下面
@@ -152,7 +174,8 @@ const editor: Module<EditorProps, GlobalDataProps> = {
     historyIndex: -1,
     cachedOldValues: null,
     maxHistoryNumber: 5,
-    isDirty: false
+    isDirty: false,
+    channels: []
   },
   mutations: {
     resetEditor(state) {
@@ -321,9 +344,15 @@ const editor: Module<EditorProps, GlobalDataProps> = {
         
       }
     }),
-    updatePage: setDirtyWrapper((state, { key, value, isRoot }) => {
+    updatePage: setDirtyWrapper((state, { key, value, isRoot, isSetting }) => {
       if (isRoot) {
         state.page[key as keyof PageData] = value
+      } else if (isSetting) {
+        debugger
+        state.page.setting = {
+          ...state.page.setting,
+          [key]: value
+        }
       } else {
         if (state.page.props) {
           state.page.props[key as keyof PageProps] = value
@@ -340,11 +369,27 @@ const editor: Module<EditorProps, GlobalDataProps> = {
     },
     saveWork(state) {
       state.isDirty = false
+    },
+    fetchChannels(state, { data }: RespListData<ChannelProps>) {
+      state.channels = data.list
+    },
+    createChannel(state, { data }: RespData<ChannelProps>) {
+      state.channels = [ ...state.channels, data]
+    },
+    deleteChannel(state, { payload }: RespData<any>) {
+      if (payload && payload.urlParams) {
+        const { urlParams } = payload
+        state.channels = state.channels.filter(channel => channel.id !== urlParams.id)
+      }
     }
   },
   actions: {
     fetchWork: actionWrapper('/works/:id', 'fetchWork'),
-    saveWork: actionWrapper('/works/:id', 'saveWork', { method: 'patch' })
+    saveWork: actionWrapper('/works/:id', 'saveWork', { method: 'patch' }),
+    publishWork: actionWrapper('/works/publish/:id', 'publishWork', { method: 'post'}),
+    fetchChannels: actionWrapper('/channel/getWorkChannels/:id', 'fetchChannels'),
+    createChannel: actionWrapper('/channel/', 'createChannel', { method: 'post'}),
+    deleteChannel: actionWrapper('/channel/:id', 'deleteChannel', { method: 'delete'})
   },
   getters: {
     getCurrentElement: (state) => {

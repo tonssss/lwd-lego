@@ -75,7 +75,7 @@ export default defineComponent({
     })
     const startCounter = () => {
       counter.value--
-      timer = setInterval(() => {
+      timer = window.setInterval(() => {
         counter.value--
       }, 1000)
     }
