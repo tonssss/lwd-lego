@@ -2,10 +2,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 import axios from 'axios'
 import { message } from 'ant-design-vue'
 import Home from '../views/Home.vue'
-import Editor from '../views/Editor.vue'
 import TemplateDetail from '../views/TemplateDetail.vue'
 import Index from '../views/Index.vue'
-import Login from '../views/Login.vue'
 import Works from '../views/Works.vue'
 import store from '../store'
 const router = createRouter({
@@ -24,13 +22,13 @@ const router = createRouter({
     {
       path: '/editor/:id',
       name: 'editor',
-      component: Editor,
+      component: () => import(/* webpackChunkName: "editor" */ '../views/Editor.vue'),
       meta: { requiredLogin: true, title: '编辑我的设计' }
     },
     {
       path: '/login',
       name: 'login',
-      component: Login,
+      component: () => import(/* webpackChunkName: "login" */ '../views/Login.vue'),
       meta: { redirectAlreadyLogin: true, title: '登录到慕课乐高', disableLoading: true }
     }
   ]

@@ -11,7 +11,7 @@
 <script lang="ts">
 
 import { AllComponentProps } from 'lego-bricks'
-import { difference } from 'lodash'
+import { difference } from 'lodash-es'
 import { defineComponent, PropType, computed, ref } from 'vue'
 import PropsTable from './PropsTable.vue'
 export interface GroupProps {
